@@ -300,6 +300,7 @@ public class AirlineManagement {
                    case 4: feature4(esql); break;
                    case 5: feature5(esql); break;
                    case 6: feature6(esql); break;
+                   case 10: SearchFlights(esql, authorisedUser); break;
 
 
 
@@ -461,6 +462,48 @@ public class AirlineManagement {
 
 
 // Rest of the functions definition go in here
+
+
+   public static void SearchFlights(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Customer"))
+         {
+            System.out.println("You are not a customer. You cannot search flights.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
+         String flightDay = in.readLine().trim();
+
+         // Get fligt info and print:
+         String getFlightQuery = "SELECT flightnumber, departurecity, arrivalcity, flightdate, (seatstotal - seatssold) AS seatsavailable, numofstops, ticketcost, dayofweek, departuretime, arrivaltime FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+
+
+
 
    public static void feature1(AirlineManagement esql) {}
    public static void feature2(AirlineManagement esql) {}
