@@ -353,20 +353,112 @@ public class AirlineManagement {
       return input;
    }//end readChoice
 
+
+
+
+
+
    /*
     * Creates a new user
     **/
-   public static void CreateUser(AirlineManagement esql){
+   public static void CreateUser(AirlineManagement esql)
+   {
+      try
+      {
+         System.out.print("Username: ");
+         String username = in.readLine().trim();
+
+         // Check if entered username is available:
+         String checkUsername = "SELECT username FROM users WHERE username = '" + username + "';";
+         int usernameTaken = esql.executeQuery(checkUsername);
+         if (usernameTaken > 0)
+         {
+            System.out.println("Username is already taken.");
+            return;
+         }
+
+         System.out.print("Password: ");
+         String password = in.readLine().trim();
+
+         System.out.print("Select Role (Customer, Pilot, Technician, Manager): ");
+         String role = in.readLine().trim();
+
+         // Create SQL to INSERT new user to the 'user' TABLE.
+         // INSERT INTO Users (username, password, role) VALUES (username, password, role):
+         String sql = "INSERT INTO Users (username, password, role) VALUES ('" + username + "', '" + password + "', '" + role + "')";
+         
+         esql.executeUpdate(sql);
+         System.out.println("User created! Now can log in.");
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+      }
+      
    }//end CreateUser
+
+
+
+
+
 
 
    /*
     * Check log in credentials for an existing user
     * @return User login or null is the user does not exist
     **/
-   public static String LogIn(AirlineManagement esql){
-      return null;
-   }//end
+   public static String LogIn(AirlineManagement esql)
+   {
+      try
+      {
+         // Get username and password:
+         System.out.print("Enter username: ");
+         String username = in.readLine().trim();
+         System.out.print("Enter password: ");
+         String password = in.readLine().trim();
+         
+         // Check username and password:
+         // Get users from User TABLE.
+         String query = "SELECT password, role FROM users WHERE username = '" + username + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+
+         // If results is empty, then no such user exists in User TABLE.
+         if (results.size() <= 0)
+         {
+            System.out.println("Username does not exist.");
+            return null;
+         }
+         else
+         {
+            // Check if password is correct.
+            if (results.get(0).get(0).equals(password))
+            {
+               System.out.println("Log in successful. Welcome " + username + "!");
+               return username;
+            }
+            else
+            {
+               System.out.println("Incorrect password.");
+               return null;
+            }
+         }
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return null;
+      }
+   }//end LogIn()
+
+
+
+
+
+
+
+
+
+
 
 // Rest of the functions definition go in here
 
