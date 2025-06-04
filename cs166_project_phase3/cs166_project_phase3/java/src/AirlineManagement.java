@@ -271,36 +271,54 @@ public class AirlineManagement {
 
                 //**the following functionalities should only be able to be used by Management**
                 System.out.println("1. View Flights");
-                System.out.println("2. View Flight Seats");
-                System.out.println("3. View Flight Status");
                 System.out.println("4. View Flights of the day");  
                 System.out.println("5. View Full Order ID History");
-                System.out.println(".........................");
-                System.out.println(".........................");
+                System.out.println("6. View Flight Schedule");
+                System.out.println("7. View Flight Seats Available and Sold");
+                System.out.println("8. View Flight On Time");
+                System.out.println("9. View Flight Passengers Status");
+                System.out.println("91. View Reservation Passenger Information");
+                System.out.println("92. View Plane Information");
+                System.out.println("93. View Technician Repairs");
+                System.out.println("94. View Repairs for Plane Over Dates");
+                System.out.println("95. View Flight Statistics");
 
                 //**the following functionalities should only be able to be used by customers**
                 System.out.println("10. Search Flights");
-                System.out.println(".........................");
-                System.out.println(".........................");
+                System.out.println("11. Find Flight Ticket Cost");
+                System.out.println("12. Find Flight Type");
+                System.out.println("13. Make Reservation");
 
                 //**the following functionalities should ony be able to be used by Pilots**
                 System.out.println("15. Maintenace Request");
-                System.out.println(".........................");
-                System.out.println(".........................");
 
                //**the following functionalities should ony be able to be used by Technicians**
-                System.out.println(".........................");
-                System.out.println(".........................");
+                System.out.println("16. Get Repairs Performed");
+                System.out.println("17. List Pilot Requests");
+                System.out.println("18. Log a Repair");
 
                 System.out.println("20. Log out");
                 switch (readChoice()){
-                   case 1: feature1(esql); break;
-                   case 2: feature2(esql); break;
-                   case 3: feature3(esql); break;
-                   case 4: feature4(esql); break;
-                   case 5: feature5(esql); break;
-                   case 6: feature6(esql); break;
+                   case 1: ViewFlights(esql, authorisedUser); break;
+                   case 4: ViewDayFlights(esql, authorisedUser); break;
+                   case 5: ViewFullOrderHistory(esql, authorisedUser); break;
+                   case 6: GetFlightWeekSchedule(esql, authorisedUser); break;
+                   case 7: GetFlightSeatsAndSold(esql, authorisedUser); break;
+                   case 8: ViewFlightOnTime(esql, authorisedUser); break;
+                   case 9: ViewFlightPassengers(esql, authorisedUser); break;
+                   case 91: ViewReservationPassengersInfo(esql, authorisedUser); break;
+                   case 92: ViewPlaneInfo(esql, authorisedUser); break;
+                   case 93: ViewTechnicianRepairs(esql, authorisedUser); break;
+                   case 94: ViewRepairsOnDates(esql, authorisedUser); break;
+                   case 95: ViewFlightStatistics(esql, authorisedUser); break;
                    case 10: SearchFlights(esql, authorisedUser); break;
+                   case 11: FindFlightTickeCost(esql, authorisedUser); break;
+                   case 12: FindFlightPlaneType(esql, authorisedUser); break;
+                   case 13: MakeReservation(esql, authorisedUser); break;
+                   case 15: MakeMaintenanceRequest(esql, authorisedUser); break;
+                   case 16: GetRepairs(esql, authorisedUser); break;
+                   case 17: ListPilotMaintenanceRequests(esql, authorisedUser); break;
+                   case 18: CatologRepair(esql, authorisedUser); break;
 
 
 
@@ -357,8 +375,6 @@ public class AirlineManagement {
 
 
 
-
-
    /*
     * Creates a new user
     **/
@@ -397,8 +413,6 @@ public class AirlineManagement {
       }
       
    }//end CreateUser
-
-
 
 
 
@@ -449,13 +463,7 @@ public class AirlineManagement {
          System.err.println(e.getMessage());
          return null;
       }
-   }//end LogIn()
-
-
-
-
-
-
+   }//end
 
 
 
@@ -464,7 +472,567 @@ public class AirlineManagement {
 // Rest of the functions definition go in here
 
 
+
+
+
+
+/******************************************
+ * 
+ * * * * MANAGEMENT FUNCTIONALITIES * * * * 
+ * 
+ ******************************************/
+
+
+
+
+   public static void ViewFlights(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a customer. You cannot search flights.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
+         String flightDay = in.readLine().trim();
+
+         // Get fligt info and print:
+         String getFlightQuery = "SELECT flightnumber, departurecity, arrivalcity, flightdate, ticketcost, dayofweek FROM flight f JOIN flightinstance fi USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   public static void ViewFullOrderHistory(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a customer. You cannot search flights.");
+            return;
+         }
+
+         System.out.print("Enter customer id: ");
+         String customerID = in.readLine().trim();
+
+         // Get fligt info and print:
+         String getFlightQuery = "SELECT reservationid, firstname, lastname, flightdate, flightnumber, departurecity, arrivalcity, status  FROM customer JOIN reservation USING (customerid) JOIN flightinstance USING (flightinstanceid) JOIN flight USING (flightnumber) WHERE customerid = '" + customerID + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+
+   // Management: 1. Given a flight number, get the flight’s schedule for the week - A flight may be scheduled on multiple days in a week
+   public static void GetFlightWeekSchedule(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         String getFlightQuery = "SELECT flightnumber, dayofweek, departuretime, arrivaltime FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 2. Given a flight and a date, get (1) the number of seats still available and (2) number of seats sold
+   public static void GetFlightSeatsAndSold(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
+         String flightDay = in.readLine().trim();
+
+         String getFlightQuery = "SELECT flightnumber, (seatstotal - seatssold) AS seatsavailable, seatssold FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+
+   // Management: 3. Given a flight and date, find whether (1) the flight departed on time, and (2) arrived on time
+   public static void ViewFlightOnTime(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
+         String flightDay = in.readLine().trim();
+
+         String getFlightQuery = "SELECT flightnumber, departedontime, arrivedontime FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 4. Given a date, get all flights scheduled on that day
+   public static void ViewDayFlights(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
+         String flightDay = in.readLine().trim();
+
+         String getFlightQuery = "SELECT flightnumber, departuretime, arrivaltime, dayofweek FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 5. Given a flight and date, get a list of passengers who (1) made reservations, (2) are on the waiting list, (3) actually flew on the flight (for flights already completed)
+   public static void ViewFlightPassengers(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         String getFlightQuery = "SELECT flightnumber, flightdate, dayofweek, firstname, lastname, status FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN reservation r USING (flightinstanceid) JOIN schedule s USING (flightnumber) JOIN customer USING (customerid) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' ORDER BY status;";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 6. Given a reservation number, retrieve information about the travelers under that number - First & Last Name, Gender, Date of birth, Address, Phone number, Zip Code
+   public static void ViewReservationPassengersInfo(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter reservation number: ");
+         String reservationID = in.readLine().trim();
+
+
+         String getFlightQuery = "SELECT firstname, lastname, gender, dob, address, phone, zip FROM reservation r JOIN customer c USING (customerid) WHERE reservationid = '" + reservationID + "';"; 
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+   // Management: 7. Given a plane number, get its make, model, age, and last repair date
+   public static void ViewPlaneInfo(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter plane id: ");
+         String planeID = in.readLine().trim();
+
+
+         String getFlightQuery = "SELECT make, model, (EXTRACT(YEAR FROM CURRENT_DATE) - year) AS age, lastrepairdate FROM plane WHERE planeid = '" + planeID + "';"; 
+         
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 8. Given a maintenance technician ID, list all repairs made by that person
+   public static void ViewTechnicianRepairs(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter technician id: ");
+         String technicianID = in.readLine().trim();
+
+
+         String getFlightQuery = "SELECT name, planeid, repaircode, repairdate FROM technician JOIN repair USING (technicianid) WHERE technicianid= '" + technicianID + "';"; 
+         
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 9. Given a plane ID and a date range, list all the dates and the codes for repairs performed
+   public static void ViewRepairsOnDates(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter plane id: ");
+         String planeID = in.readLine().trim();
+
+         System.out.print("Enter start date: ");
+         String startDate= in.readLine().trim();
+
+         System.out.print("Enter end date: ");
+         String endDate = in.readLine().trim();
+
+
+         String getFlightQuery = "SELECT make, model, year, repaircode, repairdate, technicianid FROM plane JOIN repair USING (planeid) WHERE planeid = '" + planeID + "' AND repairdate BETWEEN '" + startDate + "' AND '" + endDate + "';"; 
+         
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Management: 10. Given a flight and a range of date (start date, end date), show the statistics of the flight: number of days the flight departed and arrived, number of sold and unsold tickets
+   public static void ViewFlightStatistics(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Manager"))
+         {
+            System.out.println("You are not a manager. You cannot get schedule.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter start date: ");
+         String startDate= in.readLine().trim();
+
+         System.out.print("Enter end date: ");
+         String endDate = in.readLine().trim();
+
+
+         String getFlightQuery = "SELECT COUNT(*) AS departedarrived, SUM(seatssold) AS totalticketssold, SUM(seatstotal - seatssold) AS totalticketsunsold FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate BETWEEN '" + startDate + "' AND '" + endDate + "';"; 
+         
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+
+
+
+
+/*****************************************
+ * 
+ * * * * CUSTOMER FUNCTIONALITIES * * * * 
+ * 
+ *****************************************/
+
+
+
+   // Customers: 1. Given a destination and departure city, find all flights on a given date. - Must return departure and arrival time, number of stops scheduled, and on-time record (as a percentage)
    public static void SearchFlights(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Customer"))
+         {
+            System.out.println("You are not a customer. You cannot search flights.");
+            return;
+         }
+
+         System.out.print("Enter departure city: ");
+         String departureCity = in.readLine().trim();
+
+         System.out.print("Enter arrival city: ");
+         String arrivalCity = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         // Get fligt info and print:
+         String getFlightQuery = "SELECT departurecity, arrivalcity, flightdate, numofstops FROM flight f JOIN flightinstance fi USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE departurecity = '" + departureCity + "' AND arrivalcity = '" + arrivalCity + "' AND flightdate = '" + flightDate + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+
+   // Customers: 2. Given a flight number, find the ticket cost.
+   public static void FindFlightTickeCost(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Customer"))
+         {
+            System.out.println("You are not a customer. You cannot search flights.");
+            return;
+         }
+
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         System.out.print("Enter flight date (yyyy-mm-dd): ");
+         String flightDate = in.readLine().trim();
+
+         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
+         String flightDay = in.readLine().trim();
+
+         // Get fligt info and print:
+         String getFlightQuery = "SELECT flightnumber, departurecity, arrivalcity, flightdate, ticketcost, dayofweek FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Customers: 3. Given a flight number, find the airplane type (make and model)
+   public static void FindFlightPlaneType(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Customer"))
+         {
+            System.out.println("You are not a customer. You cannot search flights.");
+            return;
+         }
+
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
+
+         // Get fligt info and print:
+         String getFlightQuery = "SELECT flightnumber, make, model FROM flight f JOIN plane p  USING (planeid) WHERE flightnumber = '" + flightNumber + "';";
+         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+   // Customers: 4. Make a reservation for a flight - Get on the waitlist for a flight if the flight is full
+   public static void MakeReservation(AirlineManagement esql, String user)
    {
       try
       {
@@ -488,9 +1056,37 @@ public class AirlineManagement {
          System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
          String flightDay = in.readLine().trim();
 
-         // Get fligt info and print:
-         String getFlightQuery = "SELECT flightnumber, departurecity, arrivalcity, flightdate, (seatstotal - seatssold) AS seatsavailable, numofstops, ticketcost, dayofweek, departuretime, arrivaltime FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
-         int result    = esql.executeQueryAndPrintResult(getFlightQuery);
+         System.out.print("Enter customer id: ");
+         String customerID = in.readLine().trim();
+
+         String getLastID = "SELECT CAST(SUBSTRING(MAX(reservationid) FROM 2) AS INTEGER)+1 FROM reservation;";
+         List<List<String>> lastReservationID = esql.executeQueryAndReturnResult(getLastID);
+         String newReservationID = "R" + lastReservationID.get(0).get(0);
+         System.out.println(newReservationID);
+
+         String getFlightQuery = "SELECT (seatstotal - seatssold), flightinstanceid AS seatsavailable FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
+         List<List<String>> result    = esql.executeQueryAndReturnResult(getFlightQuery);
+
+         String status = "reserved";
+         int seatsAvailable = Integer.parseInt(result.get(0).get(0));
+
+         int flightInstanceID = Integer.parseInt(result.get(0).get(1));
+
+         if (seatsAvailable < 1)
+         {
+            status = "waitlist";
+         }
+
+         // Need to update seats sold if reserved (increment seats for that flight).
+         if (status == "reserved")
+         {
+            String updateFlightInstanceQuery = "UPDATE flightinstance SET seatssold = seatssold+1 WHERE flightinstanceid = '" + flightInstanceID + "';";
+            esql.executeUpdate(updateFlightInstanceQuery);
+         }
+
+         String makeReservationQuery = "INSERT INTO reservation (reservationid, customerid, flightinstanceid, status) VALUES ('" + newReservationID + "', '" + customerID + "', '" + flightInstanceID + "', '" + status + "')";
+         esql.executeUpdate(makeReservationQuery);
+         System.out.println("Reservation made. You are " + status + ".");
          return;
       }
       catch (Exception e)
@@ -502,6 +1098,193 @@ public class AirlineManagement {
 
 
 
+
+
+
+
+
+/******************************************
+ * 
+ * * * * TECHNICIAN FUNCTIONALITIES * * * * 
+ * 
+ ******************************************/
+
+
+   // Maintenance: 1. Given a plane ID and a date range, list all the dates and the codes for repairs performed
+   public static void GetRepairs(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Technician"))
+         {
+            System.out.println("You are not a technician. You cannot see pilot maintenance requests.");
+            return;
+         }
+
+         System.out.print("Enter plane id: ");
+         String planeID = in.readLine().trim();
+
+         System.out.print("Enter start date: ");
+         String startDate = in.readLine().trim();
+
+         System.out.print("Enter end date: ");
+         String endDate = in.readLine().trim();
+
+         String getRepairsQuery = "SELECT * FROM repair WHERE planeID = '" + planeID + "' AND repairdate BETWEEN '" + startDate + "' AND '" + endDate + "';";
+         int result    = esql.executeQueryAndPrintResult(getRepairsQuery);
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Maintenance: 2. Given a pilot ID, list all maintenance requests made by the pilot
+   public static void ListPilotMaintenanceRequests(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Technician"))
+         {
+            System.out.println("You are not a technician. You cannot see pilot maintenance requests.");
+            return;
+         }
+
+         System.out.print("Enter pilot id: ");
+         String pilotID = in.readLine().trim();
+
+         String getRequestsQuery = "SELECT name, repaircode, requestdate, lastrepairdate, make, model, year FROM maintenancerequest JOIN plane p USING (planeid) JOIN pilot pl USING (pilotid) WHERE pilotid = '"+ pilotID + "';";
+         int result    = esql.executeQueryAndPrintResult(getRequestsQuery);
+
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   // Maintenance: 3. After each repair, make an entry showing plane ID, repair code, and date of repair
+   public static void CatologRepair(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Technician"))
+         {
+            System.out.println("You are not a technician. You cannot see pilot maintenance requests.");
+            return;
+         }
+
+         System.out.print("Enter technician id: ");
+         String techID = in.readLine().trim();
+
+         System.out.print("Enter repair date: ");
+         String repairDate = in.readLine().trim();
+
+         System.out.print("Enter repair code id: ");
+         String repairCode = in.readLine().trim();
+
+         System.out.print("Enter plane id: ");
+         String planeID = in.readLine().trim();
+
+         // Make new repairid:
+         String getLastRepairID = "SELECT MAX(repairid) FROM repair;";
+         List<List<String>> r = esql.executeQueryAndReturnResult(getLastRepairID);
+         int newRepairID = Integer.parseInt(r.get(0).get(0)) + 1;
+
+         String sql = "INSERT INTO repair (repairid, planeid, repaircode, repairdate, technicianid) VALUES ('" + newRepairID + "', '" + planeID + "', '" + repairCode + "', '" + repairDate + "', '" + techID + "')";
+         esql.executeUpdate(sql);
+         System.out.println("Repair has been logged!");
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+
+
+
+
+
+/******************************************
+ * 
+ * * * * PILOT FUNCTIONALITIES * * * * 
+ * 
+ ******************************************/
+
+
+
+   // Pilot: 1. Make maintenance request listing plane ID, repair code requested, and date of request
+   public static void MakeMaintenanceRequest(AirlineManagement esql, String user)
+   {
+      try
+      {
+         // First, check if user is a customer. If not, cannot do this function.
+         String query = "SELECT role FROM users WHERE username = '" + user + "';";
+         List<List<String>> results = esql.executeQueryAndReturnResult(query);
+         System.out.println("Role is: " + results.get(0).get(0));
+
+         if (!results.get(0).get(0).equals("Pilot"))
+         {
+            System.out.println("You are not a pilot. You cannot make maintenance requests.");
+            return;
+         }
+
+         System.out.print("Enter pilot id: ");
+         String pilotID = in.readLine().trim();
+
+         System.out.print("Eneter plane id: ");
+         String planeID = in.readLine().trim();
+
+         System.out.print("Eneter repair code: ");
+         String repairCode = in.readLine().trim();
+
+         System.out.print("Eneter date of request: ");
+         String requestDate = in.readLine().trim();
+
+
+         // Make new requestid:
+         String getLastRequestID = "SELECT MAX(requestid) FROM maintenancerequest;";
+         List<List<String>> r = esql.executeQueryAndReturnResult(getLastRequestID);
+         int newRequestID = Integer.parseInt(r.get(0).get(0)) + 1;
+         
+         
+         String sql = "INSERT INTO maintenancerequest (requestid, planeid, repaircode, requestdate, pilotid) VALUES ('" + newRequestID + "', '" + planeID + "', '" + repairCode + "', '" + requestDate + "', '" + pilotID + "')";
+         esql.executeUpdate(sql);
+         System.out.println("Request made!");
+
+         return;
+      }
+      catch (Exception e)
+      {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
 
 
 
