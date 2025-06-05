@@ -107,3 +107,13 @@ CREATE TABLE MaintenanceRequest (
     FOREIGN KEY (PlaneID) REFERENCES Plane(PlaneID),
     FOREIGN KEY (PilotID) REFERENCES Pilot(PilotID)
 );
+
+/***** ADDITIONAL TABLES*****/
+-- Users Table
+CREATE TABLE Users (
+    userid   SERIAL PRIMARY KEY, 
+    username TEXT UNIQUE NOT NULL, 
+    password TEXT NOT NULL, 
+    role     TEXT NOT NULL, 
+    CHECK (role IN ('Customer', 'Pilot', 'Technician', 'Manager'))
+);
