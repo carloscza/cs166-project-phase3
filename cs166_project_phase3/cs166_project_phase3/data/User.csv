@@ -1,0 +1,9 @@
+username,password,role,CustomerID,PilotID,TechnicianID
+aaa,111,Manager,,,
+bbb,222,Manager,,,
+ccc,333,Customer,1,,
+ddd,444,Customer,2,,
+eee,555,Pilot,,P001,
+fff,666,Pilot,,P002,
+ggg,777,Technician,,,T001
+hhh,888,Technician,,,T002

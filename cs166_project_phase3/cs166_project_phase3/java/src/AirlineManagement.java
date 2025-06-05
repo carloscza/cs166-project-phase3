@@ -381,17 +381,71 @@ public class AirlineManagement {
 
          System.out.print("Select Role (Customer, Pilot, Technician, Manager): ");
          String role = in.readLine().trim();
+         String name = "";
+         String startingChar = "";
 
-         // Create SQL to INSERT new user to the 'user' TABLE.
-         // INSERT INTO Users (username, password, role) VALUES (username, password, role):
-         String sql = "INSERT INTO Users (username, password, role) VALUES ('" + username + "', '" + password + "', '" + role + "')";
-         
-         esql.executeUpdate(sql);
+         if("Pilot".equals(role) || "Technician".equals(role))
+         {
+            System.out.print("Enter name (first last): ");
+            name = in.readLine().trim();
+            startingChar = "Pilot".equals(role) ? "P" : "T";
+            String getLastIDQuery = "SELECT COUNT(*) FROM " + role + ";";
+            List<List<String>> r = esql.executeQueryAndReturnResult(getLastIDQuery);
+            int newIDDigits = Integer.parseInt(r.get(0).get(0)) + 1;
+            String newID = startingChar + String.format("%03d", newIDDigits);
+
+            String newPilotTechQuery = "INSERT INTO " + role + "  ("+role+"id, name) VALUES ('" + newID + "', '" + name + "')";
+            String newUserPilotTechQuery = "";
+            esql.executeUpdate(newPilotTechQuery);
+            if("Pilot".equals(role))
+            {
+               newUserPilotTechQuery = "INSERT INTO users (username, password, role, customerid, pilotid, technicianid) VALUES ('" + username + "', '" + password + "', '" + role + "', NULL, '" + newID + "', NULL);";
+            }
+            else
+            {
+               newUserPilotTechQuery = "INSERT INTO users (username, password, role, customerid, pilotid, technicianid) VALUES ('" + username + "', '" + password + "', '" + role + "', NULL, NULL, '" + newID + "');";
+            }
+            esql.executeUpdate(newUserPilotTechQuery);
+         }
+         else if ("Customer".equals(role))
+         {
+            System.out.print("Enter first name: ");
+            String firstName = in.readLine().trim();
+            System.out.print("Enter last name: ");
+            String lastName = in.readLine().trim();
+            System.out.print("Enter gender (F/M): ");
+            String gender = in.readLine().trim();
+            System.out.print("Enter dob (yyyy-mm-dd): ");
+            String dob = in.readLine().trim();
+            System.out.print("Enter address: ");
+            String address = in.readLine().trim();
+            System.out.print("Enter phone: ");
+            String phone = in.readLine().trim();
+            System.out.print("Enter ZIP (XXXXX): ");
+            String zip = in.readLine().trim();
+
+            String query = "SELECT COUNT(*) FROM customer;";
+            List<List<String>> results = esql.executeQueryAndReturnResult(query);
+            int newCustomerID = Integer.parseInt(results.get(0).get(0)) + 1;
+
+            String newCustomerQuery = "INSERT INTO customer (customerid, firstname, lastname, gender, dob, address, phone, zip) VALUES (" + newCustomerID + ", '" + firstName + "', '" + lastName + "', '" + gender + "', '" + dob + "', '" + address + "', '" + phone + "', '" + zip + "')";
+            esql.executeUpdate(newCustomerQuery);
+            String newUserCustomerQuery = "INSERT INTO users (username, password, role, customerid, pilotid, technicianid) VALUES ('" + username + "', '" + password + "', '" + role + "', '" + newCustomerID + "', NULL, NULL);";
+            esql.executeUpdate(newUserCustomerQuery);
+         }
+         else
+         {
+            String newUserManagerQuery = "INSERT INTO users (username, password, role, customerid, pilotid, technicianid) VALUES ('" + username + "', '" + password + "', '" + role + "', NULL, NULL, NULL);";
+            esql.executeUpdate(newUserManagerQuery);
+         }
+
          System.out.println("User created! Now can log in.");
+         return;
       }
       catch (Exception e)
       {
          System.err.println(e.getMessage());
+         return;
       }
       
    }//end CreateUser
@@ -561,6 +615,8 @@ public class AirlineManagement {
 
 
 
+
+
 /*************************************************************
  * 
  * * * * * * * * * CUSTOMER FUNCTIONALITIES * * * * * * * * * 
@@ -667,6 +723,7 @@ public class AirlineManagement {
    }
 
 
+
    // Customers: 3. Given a flight number, find the airplane type (make and model)
    public static void FindFlightPlaneType(AirlineManagement esql, String user)
    {
@@ -710,84 +767,58 @@ public class AirlineManagement {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
    // Customers: 4. Make a reservation for a flight - Get on the waitlist for a flight if the flight is full (Still need to fix)
    public static void MakeReservation(AirlineManagement esql, String user)
    {
       try
       {
-
-
-
-
-
-
-
-
-
-
-
-
-         // First, check if user is a customer. If not, cannot do this function.
-         String query = "SELECT role FROM users WHERE username = '" + user + "';";
-         List<List<String>> results = esql.executeQueryAndReturnResult(query);
-         System.out.println("Role is: " + results.get(0).get(0));
-
-         if (!results.get(0).get(0).equals("Customer"))
+         // First, check if the user is a customer. If user is not a customer, user cannot do this function.
+         if (!isRole(esql, user, "Customer"))
          {
-            System.out.println("You are not a customer. You cannot search flights.");
+            System.out.println("You are NOT a customer. You cannot make a reservation.");
             return;
          }
 
-         System.out.print("Enter flight number: ");
-         String flightNumber = in.readLine().trim();
+         // Get customer id from user (who is a customer) from users table.
+         String getUsersCustomerIDQuery = "SELECT customerid FROM users WHERE username = '" + user + "';";
+         List<List<String>> u = esql.executeQueryAndReturnResult(getUsersCustomerIDQuery);
+         String customerID = u.get(0).get(0);
 
          System.out.print("Enter flight date (yyyy-mm-dd): ");
          String flightDate = in.readLine().trim();
 
-         System.out.print("Enter flight day (Monday, Tuesday, Thursday, Friday, Saturday, Sunday): ");
-         String flightDay = in.readLine().trim();
+         System.out.print("Enter flight number: ");
+         String flightNumber = in.readLine().trim();
 
-         System.out.print("Enter customer id: ");
-         String customerID = in.readLine().trim();
+         // Get seats available on flight:
+         String getSeatsAvailableQuery = "SELECT (seatstotal-seatssold) AS seatsavailable, flightinstanceid FROM flightinstance WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "';";
+         List<List<String>> f = esql.executeQueryAndReturnResult(getSeatsAvailableQuery);
+         int seatsAvailable = Integer.parseInt(f.get(0).get(0));
+         int flightInstanceID = Integer.parseInt(f.get(0).get(1));
 
-         String getLastID = "SELECT CAST(SUBSTRING(MAX(reservationid) FROM 2) AS INTEGER)+1 FROM reservation;";
-         List<List<String>> lastReservationID = esql.executeQueryAndReturnResult(getLastID);
-         String newReservationID = "R" + lastReservationID.get(0).get(0);
-         System.out.println(newReservationID);
+         String status = seatsAvailable > 0 ? "reserved" : "waitlist";
 
-         String getFlightQuery = "SELECT (seatstotal - seatssold), flightinstanceid AS seatsavailable FROM flight f JOIN flightinstance fi  USING (flightnumber) JOIN schedule s USING (flightnumber) WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "' AND dayofweek = '" + flightDay + "';";
-         List<List<String>> result    = esql.executeQueryAndReturnResult(getFlightQuery);
+         // Make new reservation id.
+         String getLastReservationID = "SELECT COUNT(*) FROM reservation;";
+         List<List<String>> l = esql.executeQueryAndReturnResult(getLastReservationID);
+         int newID = Integer.parseInt(l.get(0).get(0)) + 1;
+         String newReservationID = "R" + Integer.toString(newID);
 
-         String status = "reserved";
-         int seatsAvailable = Integer.parseInt(result.get(0).get(0));
-
-         int flightInstanceID = Integer.parseInt(result.get(0).get(1));
-
-         if (seatsAvailable < 1)
-         {
-            status = "waitlist";
-         }
 
          // Need to update seats sold if reserved (increment seats for that flight).
          if (status == "reserved")
          {
-            String updateFlightInstanceQuery = "UPDATE flightinstance SET seatssold = seatssold+1 WHERE flightinstanceid = '" + flightInstanceID + "';";
-            esql.executeUpdate(updateFlightInstanceQuery);
+            String updateFlightInstanceAndReserveQuery = "BEGIN; " 
+                                                       + "UPDATE flightinstance SET seatssold = seatssold + 1 WHERE flightnumber = '" + flightNumber + "' AND flightdate = '" + flightDate + "'; " 
+                                                       + "INSERT INTO reservation (reservationid, customerid, flightinstanceid, status) VALUES ('" + newReservationID + "', '" + customerID + "', '" + flightInstanceID + "', '" + status + "'); " 
+                                                       + "COMMIT;";
+            esql.executeUpdate(updateFlightInstanceAndReserveQuery);
          }
-
-         String makeReservationQuery = "INSERT INTO reservation (reservationid, customerid, flightinstanceid, status) VALUES ('" + newReservationID + "', '" + customerID + "', '" + flightInstanceID + "', '" + status + "')";
-         esql.executeUpdate(makeReservationQuery);
+         else
+         {
+            String makeWaitlistReservationQuery = "INSERT INTO reservation (reservationid, customerid, flightinstanceid, status) VALUES ('" + newReservationID + "', '" + customerID + "', '" + flightInstanceID + "', '" + status + "')";
+            esql.executeUpdate(makeWaitlistReservationQuery);
+         }
          System.out.println("Reservation made. You are " + status + ".");
          return;
       }
@@ -805,11 +836,16 @@ public class AirlineManagement {
 
 
 
-/******************************************
+
+
+
+/*************************************************************
  * 
- * * * * TECHNICIAN FUNCTIONALITIES * * * * 
+ * * * * * * * * * TECHNICIAN FUNCTIONALITIES * * * * * * * * * 
  * 
- ******************************************/
+ *************************************************************/
+
+
 
 
    // Maintenance: 1. Given a plane ID and a date range, list all the dates and the codes for repairs performed
@@ -896,7 +932,7 @@ public class AirlineManagement {
    }
 
 
-   // Maintenance: 3. After each repair, make an entry showing plane ID, repair code, and date of repair (still need to fix).
+   // Maintenance: 3. After each repair, make an entry showing plane ID, repair code, and date of repair.
    public static void CatologRepair(AirlineManagement esql, String user)
    {
       try
@@ -908,9 +944,12 @@ public class AirlineManagement {
             return;
          }
 
-         System.out.print("Enter technician id: ");
-         String techID = in.readLine().trim();
+         // Get technicianid from user (who is a technician) from users table.
+         String getUsersTechnicianIDQuery = "SELECT technicianid FROM users WHERE username = '" + user + "';";
+         List<List<String>> u = esql.executeQueryAndReturnResult(getUsersTechnicianIDQuery);
+         String technicianID = u.get(0).get(0);
 
+         // Prompt user for input:
          System.out.print("Enter repair date: ");
          String repairDate = in.readLine().trim();
 
@@ -920,12 +959,22 @@ public class AirlineManagement {
          System.out.print("Enter plane id: ");
          String planeID = in.readLine().trim();
 
+
+         // Check if that repair has already been logged (stop a technician from spam repair logging).
+         String checkRepair = "SELECT * FROM repair WHERE planeid = '" + planeID + "' AND repaircode = '" + repairCode + "' AND repairdate = '" + repairDate + "' AND technicianid = '" + technicianID + "';";
+         List<List<String>> cr = esql.executeQueryAndReturnResult(checkRepair);
+         if (cr.size() > 0)
+         {
+            System.out.println("You have logged that repair already.");
+            return;
+         }
+
          // Make new repairid:
          String getLastRepairID = "SELECT MAX(repairid) FROM repair;";
          List<List<String>> r = esql.executeQueryAndReturnResult(getLastRepairID);
          int newRepairID = Integer.parseInt(r.get(0).get(0)) + 1;
 
-         String sql = "INSERT INTO repair (repairid, planeid, repaircode, repairdate, technicianid) VALUES ('" + newRepairID + "', '" + planeID + "', '" + repairCode + "', '" + repairDate + "', '" + techID + "')";
+         String sql = "INSERT INTO repair (repairid, planeid, repaircode, repairdate, technicianid) VALUES ('" + newRepairID + "', '" + planeID + "', '" + repairCode + "', '" + repairDate + "', '" + technicianID + "')";
          esql.executeUpdate(sql);
          System.out.println("Repair has been logged!");
          return;
@@ -943,48 +992,61 @@ public class AirlineManagement {
 
 
 
-/******************************************
+
+
+
+/*************************************************************
  * 
- * * * * PILOT FUNCTIONALITIES * * * * 
+ * * * * * * * * * PILOT FUNCTIONALITIES * * * * * * * * * 
  * 
- ******************************************/
+ *************************************************************/
 
 
 
-   // Pilot: 1. Make maintenance request listing plane ID, repair code requested, and date of request (still need to fix).
+
+   // Pilot: 1. Make maintenance request listing plane ID, repair code requested, and date of request.
    public static void MakeMaintenanceRequest(AirlineManagement esql, String user)
    {
       try
       {
-         // First, check if user is a customer. If not, cannot do this function.
-         String query = "SELECT role FROM users WHERE username = '" + user + "';";
-         List<List<String>> results = esql.executeQueryAndReturnResult(query);
-         System.out.println("Role is: " + results.get(0).get(0));
-
-         if (!results.get(0).get(0).equals("Pilot"))
+         // First, check if the user is a technician. If user is not a technician, user cannot do this function.
+         if (!isRole(esql, user, "Pilot"))
          {
-            System.out.println("You are not a pilot. You cannot make maintenance requests.");
+            System.out.println("You are NOT a pilot. You cannot make maintenance requests.");
             return;
          }
 
-         System.out.print("Enter pilot id: ");
-         String pilotID = in.readLine().trim();
 
-         System.out.print("Eneter plane id: ");
+         // Get pilotid from user (who is a pilot) from users table.
+         String getUsersPilotIDQuery = "SELECT pilotid FROM users WHERE username = '" + user + "';";
+         List<List<String>> u = esql.executeQueryAndReturnResult(getUsersPilotIDQuery);
+         String pilotID = u.get(0).get(0);
+
+
+         // Prompt user for input:
+         System.out.print("Enter plane id: ");
          String planeID = in.readLine().trim();
 
-         System.out.print("Eneter repair code: ");
+         System.out.print("Enter repair code: ");
          String repairCode = in.readLine().trim();
 
-         System.out.print("Eneter date of request: ");
+         System.out.print("Enter date of request: ");
          String requestDate = in.readLine().trim();
 
+
+         // Check if that maintenance request for that plane with repair code and date has not already been made (stop a pilot from spam requesting).
+         String checkRequest = "SELECT * FROM maintenancerequest WHERE planeid = '" + planeID + "' AND repaircode = '" + repairCode + "' AND requestdate = '" + requestDate + "' AND pilotid = '" + pilotID + "';";
+         List<List<String>> cr = esql.executeQueryAndReturnResult(checkRequest);
+         if (cr.size() > 0)
+         {
+            System.out.println("Maintenance request " + repairCode + " for " + planeID + " on " + requestDate + " has already been made by you.");
+            return;
+         }
 
          // Make new requestid:
          String getLastRequestID = "SELECT MAX(requestid) FROM maintenancerequest;";
          List<List<String>> r = esql.executeQueryAndReturnResult(getLastRequestID);
          int newRequestID = Integer.parseInt(r.get(0).get(0)) + 1;
-         
          
          String sql = "INSERT INTO maintenancerequest (requestid, planeid, repaircode, requestdate, pilotid) VALUES ('" + newRequestID + "', '" + planeID + "', '" + repairCode + "', '" + requestDate + "', '" + pilotID + "')";
          esql.executeUpdate(sql);
@@ -1001,14 +1063,8 @@ public class AirlineManagement {
 
 
 
-   public static void feature1(AirlineManagement esql) {}
-   public static void feature2(AirlineManagement esql) {}
-   public static void feature3(AirlineManagement esql) {}
-   public static void feature4(AirlineManagement esql) {}
-   public static void feature5(AirlineManagement esql) {}
-   public static void feature6(AirlineManagement esql) {}
-  
-
 
 }//end AirlineManagement
+
+
 

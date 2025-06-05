@@ -20,3 +20,7 @@
 
 \copy MaintenanceRequest FROM 'data/MaintenanceRequest.csv' WITH DELIMITER ',' CSV HEADER; 
 
+
+/* Load new Users.csv file data into Users Table*/
+
+\copy Users FROM 'data/User.csv' WITH DELIMITER ',' CSV HEADER; 

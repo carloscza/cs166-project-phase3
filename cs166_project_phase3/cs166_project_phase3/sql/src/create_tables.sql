@@ -113,15 +113,24 @@ CREATE TABLE MaintenanceRequest (
 
 
 
-/***** ADDITIONAL TABLES*****/
 
+
+/****** ADDITIONAL TABLES *************/
 
 
 -- Users Table
 CREATE TABLE Users (
-    userid   SERIAL PRIMARY KEY, 
     username TEXT UNIQUE NOT NULL, 
     password TEXT NOT NULL, 
-    role     TEXT NOT NULL, 
-    CHECK (role IN ('Customer', 'Pilot', 'Technician', 'Manager'))
+    role     TEXT NOT NULL CHECK (role IN ('Customer', 'Pilot', 'Technician', 'Manager')),
+    CustomerID INTEGER REFERENCES Customer(CustomerID),
+    PilotID TEXT REFERENCES Pilot(PilotID),
+    TechnicianID TEXT REFERENCES Technician(TechnicianID)
+
+    CHECK (
+        (role = 'Customer'  AND customerid   IS NOT NULL  AND pilotid IS NULL    AND technicianid IS NULL) OR
+        (role = 'Pilot'     AND pilotid      IS NOT NULL  AND customerid IS NULL AND technicianid IS NULL) OR
+        (role = 'Technician'AND technicianid IS NOT NULL  AND customerid IS NULL AND pilotid      IS NULL) OR
+        (role = 'Manager'   AND customerid   IS NULL      AND pilotid IS NULL    AND technicianid IS NULL)
+    )
 );
